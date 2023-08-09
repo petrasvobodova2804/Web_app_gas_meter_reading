@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Rendering Local Images Using Flask</title>
+        <style>
+            body {
+                font-family: Arial, sans-serif;
+                background-color: #f4f4f4;
+                margin: 0;
+                padding: 0;
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                justify-content: center;
+                height: 100vh;
+            }
+    
+            h3 {
+                color: #333;
+                margin-bottom: 20px;
+            }
+    
+            .image-container {
+                text-align: center;
+                margin-top: 30px; /* Add margin to create space above the image container */
+            }
+
+            .uploaded-image {
+                max-width: 100%;
+                height: auto;
+                margin-top: 30px;
+                margin-bottom: 15px;
+                border: 1px solid #ccc;
+                box-shadow: 0 0 5px rgba(0, 0, 0, 0.1);
+                display: none;
+            }
+    
+            h5 {
+                color: #333;
+                margin-top: 10px; /* Adjusted margin */
+                margin-bottom: 5px; /* Adjusted margin */
+            }
+    
+            form {
+                text-align: center;
+                margin-top: 10px;
+            }
+    
+            h6 {
+                font-size: 16px;
+                margin-bottom: 3px;
+            }
+    
+            input[type="text"] {
+                padding: 5px;
+                margin-bottom: 5px;
+                width: 100%;
+                box-sizing: border-box;
+            }
+    
+            input[type="submit"],
+            input[type="button"] {
+                background-color: #007bff;
+                color: #fff;
+                border: none;
+                padding: 10px 20px;
+                border-radius: 5px;
+                cursor: pointer;
+                font-size: 14px;
+                margin-top: 10px;
+                margin-right: 10px;
+                transition: background-color 0.3s ease;
+            }
+
+            input[name="statistics_button"] {
+                background-color: #00a000;
+            }
+    
+            input[type="submit"]:hover {
+                background-color: #0056b3;
+            }
+
+            #statistics-result {
+                margin-top: 20px;
+                color: #333;
+                font-size: 18px;
+            }
+    
+            /* Custom style for the "Left" and "Right" buttons */
+            .left-right-buttons {
+                display: flex;
+                justify-content: space-between;
+                width: 100%;
+                margin-top: 15px;
+            }
+    
+            .left-right-button {
+                background-color: #888;
+            }
+    
+            .left-right-button:hover {
+                background-color: #555;
+            }
+        </style>
+    </head>
+    <body>
+        <h3>Your uploaded images of gas meter:</h3>
+        {% if filenames %}
+            <div style="margin-top: 30px;"></div>
+            <div class="image-container">
+                {% for i, filename in filenames|enumerate %}
+                    <img class="uploaded-image" src="{{ filename }}" alt="Processed Image" {% if i > 0 %}style="display: none;"{% endif %}>
+                {% endfor %}
+                
+                <div class="left-right-buttons">
+                    <input class="left-right-button" type="button" value="Left" onclick="changeImage(-1)">
+                    <input class="left-right-button" type="button" value="Right" onclick="changeImage(1)">
+                </div>
+            </div>
+        {% endif %}
+    
+        <h5>Here you can change values:</h5>
+        <form method="POST" action="{{ url_for('upload_files') }}" id="upload-form">
+            <h6>Image <span id="image-index">{{ currentImageIndex }}</span></h6>
+            {% set val = values[0] %}
+            {% for j in range(5) %}
+                {% set entry_value = val[j] %}
+                <input type="text" name="entry{{ j }}" value="{{ entry_value }}">
+                <br>
+            {% endfor %}
+            <input type="submit" name="save_button" value="Save">
+            <input type="submit" name="save_to_csv_button" value="Save to CSV">
+            <input type="submit" name="statistics_button" value="Statistics" formaction="{{ url_for('statistics') }}">
+            
+            <input type="hidden" name="currentImageIndex" value="{{ currentImageIndex }}">
+        </form>
+
+
+
+    <script>
+        let currentImageIndex_ = {{ currentImageIndex }};
+        const images = {{ filenames|tojson }};
+        const numImages = images.length;
+        let currentValues = {{ values|tojson }};
+
+
+
+        function updateFormValues() {
+            for (let j = 0; j < 5; j++) {
+                const inputField = document.querySelector(`input[name="entry${j}"]`);
+                inputField.value = currentValues[currentImageIndex_][j];
+            }
+        }
+
+        function updateImageIndex() {
+            const hiddenInput = document.querySelector('input[name="currentImageIndex"]');
+            hiddenInput.value = currentImageIndex_;
+            document.getElementById('image-index').textContent = currentImageIndex_;  // Update the displayed index in the <h6> element
+        }
+
+        function changeImage(direction) {
+            currentImageIndex_ += direction;
+            if (currentImageIndex_ < 0) {
+                currentImageIndex_ = numImages - 1;
+            } else if (currentImageIndex_ >= numImages) {
+                currentImageIndex_ = 0;
+            }
+
+            const uploadedImages = document.getElementsByClassName('uploaded-image');
+            for (let i = 0; i < uploadedImages.length; i++) {
+                if (i === currentImageIndex_) {
+                    uploadedImages[i].style.display = 'block';
+                } else {
+                    uploadedImages[i].style.display = 'none';
+                }
+            }
+            updateFormValues();
+            updateImageIndex();
+        }
+
+        // Call changeImage() initially to show only the first image
+        changeImage(0);
+
+        // Rest of your JavaScript code
+    </script>
+</body>
+</html>

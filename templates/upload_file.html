@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Rendering Local Images Using Flask</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f4;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+        }
+
+        h3 {
+            color: #333;
+            margin-bottom: 20px;
+        }
+
+        img {
+            max-width: 100%;
+            height: auto;
+            margin-bottom: 20px;
+            border: 1px solid #ccc;
+            box-shadow: 0 0 5px rgba(0, 0, 0, 0.1);
+        }
+
+        h5 {
+            color: #333;
+            margin-top: 20px;
+        }
+
+        form {
+            text-align: center;
+            margin-top: 10px;
+        }
+
+        input[type="text"] {
+            padding: 5px;
+            margin-bottom: 5px;
+            width: 100%;
+            box-sizing: border-box;
+        }
+
+        input[type="submit"] {
+            background-color: #007bff;
+            color: #fff;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 14px;
+            margin-top: 10px;
+            margin-right: 10px;
+            transition: background-color 0.3s ease;
+        }
+
+        input[name="statistics_button"] {
+            background-color: #00a000;
+        }
+
+        input[type="submit"]:hover {
+            background-color: #0056b3;
+        }
+
+        #statistics-result {
+            margin-top: 20px;
+            color: #333;
+            font-size: 18px;
+        }
+    </style>
+</head>
+<body>
+    <h3>Your uploaded image of a gas meter:</h3>
+    <img src="{{ url_for('static', filename=filename_) }}" alt="Processed Image">
+
+    <h5>Here you can change values:</h5>
+    <form method="POST" action="{{ url_for('upload_file') }}" id="upload-form">
+        {% for i in range(5) %}
+        <input type="text" name="entry{{ i }}" value="{{ values[i] }}">
+        <br>
+        {% endfor %}
+        <input type="submit" name="save_button" value="Save">
+        <input type="submit" name="save_to_csv_button" value="Save to CSV">
+        <input type="submit" name="statistics_button" value="Statistics">
+    </form>
+    <div id="statistics-result"></div>
+    
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const form = document.getElementById('upload-form');
+            form.addEventListener('submit', (event) => {
+                event.preventDefault(); // Prevent the form from submitting the traditional way
+
+                const formData = new FormData(form);
+                formData.append('clicked_button', event.submitter.name);
+
+                fetch('/upload_file', {
+                    method: 'POST',
+                    body: formData,
+                })
+                .then(response => response.json())
+                .then(data => {
+                    // Handle the response data based on the clicked button's name
+                    if (data.clicked_button === 'save_button') {
+                        alert('Image uploaded and processed successfully!');
+                    } else if (data.clicked_button === 'save_to_csv_button') {
+                        alert('Results saved to CSV successfully!');
+                    } else if (data.clicked_button === 'statistics_button') {
+                        // Handle the statistics result dynamically
+                        const statisticsResult = document.getElementById('statistics-result');
+                        statisticsResult.textContent = `Total sum: ${data.total_sum}`;
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    // Handle the error if necessary
+                });
+            });
+        });
+    </script>
+</body>
+</html>
